@@ -2,10 +2,13 @@ const express = require("express");
 const CONFIG = require("./config/config");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
+const { requiresAuth } = require("express-openid-connect");
 const connectToDatabase = require("./database/db");
 const BlogRouter = require("./routes/blog");
 const bodyParser = require("body-parser");
 const logger = require("./Login/logger");
+
+const auth0Middleware = require("./auth/auth0");
 
 const app = express();
 
@@ -16,14 +19,16 @@ connectToDatabase();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// Security Middleware
+app.use(helmet());
+
 app.use("/blog", BlogRouter);
+
+app.use(auth0Middleware);
 
 app.get("/", (req, res) => {
   res.send("Blog is Working");
 });
-
-// Security Middleware
-app.use(helmet());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
