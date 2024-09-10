@@ -19,23 +19,22 @@ connectToDatabase();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+
 // Security Middleware
 app.use(helmet());
 
-app.use("/blog", BlogRouter);
-
 app.use(auth0Middleware);
+
+app.use("/blog", requiresAuth(), BlogRouter);
 
 app.get("/", (req, res) => {
   res.send("Blog is Working");
-});
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
-  standardHeaders: "draft-7", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-  // store: ... , // Redis, Memcached, etc. See below.
 });
 
 app.use(limiter);
